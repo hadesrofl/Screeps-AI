@@ -46,18 +46,37 @@ var roleBuilder = {
     }
 
     if (creep.memory.building) {
-      var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-      if (targets.length) {
-        if (creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0], {
+      var structures = creep.room.find(FIND_MY_STRUCTURES);
+      var target = null;
+      for (let i = 0; i < structures.length; i++) {
+        if (structures[i].hits < structures[i].hitsMax) {
+          target = structures[i];
+          break;
+        }
+      }
+      if (target != null) {
+        if (creep.repair(target) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target, {
             visualizePathStyle: {
               stroke: '#ffffff'
             }
           });
         }
       } else {
-        creep.memory.building = false;
-        roleUpgrader.run(creep);
+        var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+        if (targets.length) {
+          target = targets[0];
+          if (creep.build(target) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(target, {
+              visualizePathStyle: {
+                stroke: '#ffffff'
+              }
+            });
+          }
+        } else {
+          creep.memory.building = false;
+          roleUpgrader.run(creep);
+        }
       }
     } else {
       var sourceId = managerHarvest.getSource(creep);
