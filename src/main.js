@@ -3,11 +3,13 @@ var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
 var managerHarvest = require('manager.harvest');
 
-var MAX_BUILDER = 2;
-var MAX_UPGRADER = 2;
-var MAX_HARVESTER = 2;
-var MAX_BIG_HARVESTER = 1;
-var RESET_HARVEST_MANAGER = 20;
+const MAX_BUILDER = 1;
+const MAX_UPGRADER = 1;
+const MAX_HARVESTER = 1;
+const MAX_BIG_HARVESTER = 2;
+const MAX_BIG_BUILDER = 2;
+const MAX_BIG_UPGRADER = 2;
+const RESET_HARVEST_MANAGER = 20;
 var creepCounter = 0;
 var harvesterCounter = 0;
 var bigHarvesterCounter = 0;
@@ -82,11 +84,22 @@ module.exports.loop = function() {
     roleUpgrader.createCreep(Game.spawns.Home, false);
     console.log("Created new Upgrader");
     upgraderCounter++;
+  } else if (bigUpgraderCounter < MAX_BIG_UPGRADER && roleUpgrader.canCreateCreep(
+      Game.spawns.Home, true)) {
+    roleUpgrader.createCreep(Game.spawns.Home, true);
+    console.log("Created new Big Upgrader");
+    bigUpgraderCounter++;
   } else if (builderCounter < MAX_BUILDER && roleBuilder.canCreateCreep(Game.spawns
       .Home, false)) {
     roleBuilder.createCreep(Game.spawns.Home, false);
     console.log("Created new Builder");
     builderCounter++;
+  } else
+  if (bigBuilderCounter < MAX_BIG_BUILDER && roleBuilder.canCreateCreep(
+      Game.spawns.Home, true)) {
+    roleBuilder.createCreep(Game.spawns.Home, true);
+    console.log("Created new Big Builder");
+    bigBuilderCounter++;
   } else if (harvesterCounter < MAX_HARVESTER && roleHarvester.canCreateCreep(
       Game.spawns.Home, false)) {
     roleHarvester.createCreep(Game.spawns.Home, false);
@@ -102,6 +115,9 @@ module.exports.loop = function() {
   harvesterCounter = 0;
   builderCounter = 0;
   upgraderCounter = 0;
+  bigBuilderCounter = 0;
+  bigHarvesterCounter = 0;
+  bigUpgraderCounter = 0;
 
   /*  if ((Game.time - lastResetTime) >= RESET_HARVEST_MANAGER) {
       console.log("Last Reset Time: " + lastResetTime + " Game Time: " + Game.time);
