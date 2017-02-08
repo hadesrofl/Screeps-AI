@@ -6,11 +6,15 @@ var managerHarvest = require('manager.harvest');
 var MAX_BUILDER = 2;
 var MAX_UPGRADER = 2;
 var MAX_HARVESTER = 2;
+var MAX_BIG_HARVESTER = 1;
 var RESET_HARVEST_MANAGER = 20;
 var creepCounter = 0;
 var harvesterCounter = 0;
+var bigHarvesterCounter = 0;
 var builderCounter = 0;
+var bigBuilderCounter = 0;
 var upgraderCounter = 0;
+var bigUpgraderCounter = 0;
 var lastResetTime = 0;
 
 module.exports.loop = function() {
@@ -48,34 +52,51 @@ module.exports.loop = function() {
       }
     }
     if (creep.memory.role == 'harvester') {
-      harvesterCounter++;
+      if (creep.memory.big) {
+        bigHarvesterCounter++;
+      } else {
+        harvesterCounter++;
+      }
       roleHarvester.run(creep);
     }
     if (creep.memory.role == 'upgrader') {
-      upgraderCounter++;
+      if (creep.memory.big) {
+        bigUpgraderCounter++;
+      } else {
+        upgraderCounter++;
+      }
       roleUpgrader.run(creep);
     }
     if (creep.memory.role == 'builder') {
-      builderCounter++;
+      if (creep.memory.big) {
+        bigBuilderCounter++;
+      } else {
+        builderCounter++;
+      }
       roleBuilder.run(creep);
     }
   }
 
   if (upgraderCounter < MAX_UPGRADER && roleUpgrader.canCreateCreep(Game.spawns
-      .Home)) {
-    roleUpgrader.createCreep(Game.spawns.Home);
+      .Home, false)) {
+    roleUpgrader.createCreep(Game.spawns.Home, false);
     console.log("Created new Upgrader");
     upgraderCounter++;
   } else if (builderCounter < MAX_BUILDER && roleBuilder.canCreateCreep(Game.spawns
-      .Home)) {
-    roleBuilder.createCreep(Game.spawns.Home);
+      .Home, false)) {
+    roleBuilder.createCreep(Game.spawns.Home, false);
     console.log("Created new Builder");
     builderCounter++;
   } else if (harvesterCounter < MAX_HARVESTER && roleHarvester.canCreateCreep(
-      Game.spawns.Home)) {
-    roleHarvester.createCreep(Game.spawns.Home);
+      Game.spawns.Home, false)) {
+    roleHarvester.createCreep(Game.spawns.Home, false);
     console.log("Created new Harvester");
     harvesterCounter++;
+  } else if (bigHarvesterCounter < MAX_BIG_HARVESTER && roleHarvester.canCreateCreep(
+      Game.spawns.Home, true)) {
+    roleHarvester.createCreep(Game.spawns.Home, true);
+    console.log("Created new Big Harvester");
+    bigHarvesterCounter++;
   }
   creepCounter = 0;
   harvesterCounter = 0;

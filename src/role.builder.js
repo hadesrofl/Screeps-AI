@@ -1,19 +1,37 @@
 var managerHarvest = require('manager.harvest');
+var roleUpgrader = require('role.upgrader');
 
 var roleBuilder = {
   parts: [WORK, CARRY, CARRY, MOVE, MOVE],
+  bigParts: [WORK, WORK, CARRY, MOVE, MOVE, MOVE],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
-  canCreateCreep: function(spawn) {
-    return spawn.canCreateCreep(
-      this.parts, null) == 0;
+  canCreateCreep: function(spawn, big) {
+    if (big) {
+      return spawn.canCreateCreep(
+        this.bigParts, null) == 0
+    } else {
+      return spawn.canCreateCreep(
+        this.parts, null) == 0;
+    }
   },
   /** @param {STRUCTURE_SPAWN} spawn **/
-  createCreep: function(spawn) {
-    spawn.createCreep(this.parts, null, {
-      role: 'builder',
-      building: false
-    });
+  createCreep: function(spawn, big) {
+    if (this.canCreateCreep(spawn, big)) {
+      if (big) {
+        spawn.createCreep(this.bigParts, null, {
+          role: 'builder',
+          building: false,
+          big: true
+        });
+      } else {
+        spawn.createCreep(this.parts, null, {
+          role: 'builder',
+          building: false,
+          big: false
+        });
+      }
+    }
   },
   /** @param {Creep} creep **/
   run: function(creep) {
@@ -37,6 +55,9 @@ var roleBuilder = {
             }
           });
         }
+      } else {
+        creep.memory.building = false;
+        roleUpgrader.run(creep);
       }
     } else {
       var sourceId = managerHarvest.getSource(creep);
