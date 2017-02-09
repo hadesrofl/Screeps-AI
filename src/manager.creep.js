@@ -43,8 +43,10 @@ var managerCreep = {
   /**  @param {STRUCTURE_SPAWN} spawn **/
   createCreep: function(spawn) {
     var creeps = this.countCreeps(spawn);
-    if (creeps.size == 0) {
+    if (creeps.size == 0 || creeps.get(roleEnums.HARVESTER) < 1) {
       roleHarvester.createCreep(spawn, false);
+    } else if (creeps.get(roleEnums.GATHERER) < 1) {
+      roleGatherer.createCreep(spawn, false);
     }
     creeps.forEach(function(value, key) {
       var ret = null;
