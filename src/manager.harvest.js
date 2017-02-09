@@ -14,7 +14,6 @@ var managerHarvest = {
         .get(creep.name));
     } else {
       allocationMap.set(creep.name, sourceId);
-      creep.memory.sourceId = sourceId;
       var found = false;
       if (sourceMap.has(sourceId)) {
         var value = sourceMap.get(sourceId);
@@ -25,7 +24,6 @@ var managerHarvest = {
   },
   addSource: function(source) {
     if (!sourceMap.has(source.id)) {
-      console.log("Adding: " + source.id);
       sourceMap.set(source.id, 0);
     }
   },
@@ -34,9 +32,6 @@ var managerHarvest = {
     if (this.isAllocated(creep)) {
       return allocationMap.get(creep.name);
     } else {
-      /**if ('sourceId' in creep.memory) {
-        return creep.memory.sourceId;
-      }**/
       return -1;
     }
   },
@@ -46,7 +41,6 @@ var managerHarvest = {
 
     sourceMap.forEach(function(value, key) {
       if (key !== 0) {
-        //console.log("Key : " + key + " with Value: " + value);
         if (minCount == -1) {
           minCount = value;
           source = key;
@@ -57,7 +51,6 @@ var managerHarvest = {
         }
       }
     });
-    //console.log("Min Count: " + minCount + " on Node: " + source);
     if (minCount >= 0) {
       return source;
     } else {

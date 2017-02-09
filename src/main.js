@@ -1,30 +1,15 @@
-var roleHarvester = require('role.harvester');
-var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
-var managerHarvest = require('manager.harvest');
+var managerRoom = require('manager.room');
+var managerCreep = require('manager.creep');
 
-const MAX_BUILDER = 1;
-const MAX_UPGRADER = 1;
-const MAX_HARVESTER = 1;
-const MAX_BIG_HARVESTER = 2;
-const MAX_BIG_BUILDER = 2;
-const MAX_BIG_UPGRADER = 2;
-const RESET_HARVEST_MANAGER = 20;
-var creepCounter = 0;
-var harvesterCounter = 0;
-var bigHarvesterCounter = 0;
-var builderCounter = 0;
-var bigBuilderCounter = 0;
-var upgraderCounter = 0;
-var bigUpgraderCounter = 0;
-var lastResetTime = 0;
+Memory.cpuIndex = 0;
+Memory.cpuUsage = 0.0;
 
 module.exports.loop = function() {
 
-  for (var i in Memory.creeps) {
-    if (!Game.creeps[i]) {
-      delete Memory.creeps[i];
-    }
+  managerCreep.deleteMemory();
+  for (var name in Game.spawns) {
+    var spawn = Game.spawns[name];
+    managerCreep.createCreep(spawn);
   }
 
   var tower = Game.getObjectById('TOWER_ID');
@@ -43,87 +28,17 @@ module.exports.loop = function() {
     }
   }
 
-  for (var name in Game.creeps) {
-    var creep = Game.creeps[name];
-    creepCounter++;
-    // Populate Map of Energy Sources
-    if (managerHarvest.getSources().size == 0) {
-      var sources = creep.room.find(FIND_SOURCES);
-      for (let i = 0; i < sources.length; i++) {
-        managerHarvest.addSource(sources[i]);
-      }
-    }
-    if (creep.memory.role == 'harvester') {
-      if (creep.memory.big) {
-        bigHarvesterCounter++;
-      } else {
-        harvesterCounter++;
-      }
-      roleHarvester.run(creep);
-    }
-    if (creep.memory.role == 'upgrader') {
-      if (creep.memory.big) {
-        bigUpgraderCounter++;
-      } else {
-        upgraderCounter++;
-      }
-      roleUpgrader.run(creep);
-    }
-    if (creep.memory.role == 'builder') {
-      if (creep.memory.big) {
-        bigBuilderCounter++;
-      } else {
-        builderCounter++;
-      }
-      roleBuilder.run(creep);
-    }
-  }
+  managerCreep.action();
 
-  if (upgraderCounter < MAX_UPGRADER && roleUpgrader.canCreateCreep(Game.spawns
-      .Home, false)) {
-    roleUpgrader.createCreep(Game.spawns.Home, false);
-    console.log("Created new Upgrader");
-    upgraderCounter++;
-  } else if (bigUpgraderCounter < MAX_BIG_UPGRADER && roleUpgrader.canCreateCreep(
-      Game.spawns.Home, true)) {
-    roleUpgrader.createCreep(Game.spawns.Home, true);
-    console.log("Created new Big Upgrader");
-    bigUpgraderCounter++;
-  } else if (builderCounter < MAX_BUILDER && roleBuilder.canCreateCreep(Game.spawns
-      .Home, false)) {
-    roleBuilder.createCreep(Game.spawns.Home, false);
-    console.log("Created new Builder");
-    builderCounter++;
-  } else
-  if (bigBuilderCounter < MAX_BIG_BUILDER && roleBuilder.canCreateCreep(
-      Game.spawns.Home, true)) {
-    roleBuilder.createCreep(Game.spawns.Home, true);
-    console.log("Created new Big Builder");
-    bigBuilderCounter++;
-  } else if (harvesterCounter < MAX_HARVESTER && roleHarvester.canCreateCreep(
-      Game.spawns.Home, false)) {
-    roleHarvester.createCreep(Game.spawns.Home, false);
-    console.log("Created new Harvester");
-    harvesterCounter++;
-  } else if (bigHarvesterCounter < MAX_BIG_HARVESTER && roleHarvester.canCreateCreep(
-      Game.spawns.Home, true)) {
-    roleHarvester.createCreep(Game.spawns.Home, true);
-    console.log("Created new Big Harvester");
-    bigHarvesterCounter++;
+  if (Game.cpu.bucket < 10000 || Game.cpu.getUsed() > 10) {
+    console.log("Bucket: " + Game.cpu.bucket + " Used CPU: " + Game.cpu.getUsed());
   }
-  creepCounter = 0;
-  harvesterCounter = 0;
-  builderCounter = 0;
-  upgraderCounter = 0;
-  bigBuilderCounter = 0;
-  bigHarvesterCounter = 0;
-  bigUpgraderCounter = 0;
-
-  /*  if ((Game.time - lastResetTime) >= RESET_HARVEST_MANAGER) {
-      console.log("Last Reset Time: " + lastResetTime + " Game Time: " + Game.time);
-      console.log("Clearing Harvest Manager!");
-      managerHarvest.clear();
-      lastResetTime = Game.time;
-    }*/
-  console.log("Bucket: " + Game.cpu.bucket + " Used CPU: " + Game.cpu.getUsed());
+  Memory.cpuUsage = Memory.cpuUsage + Game.cpu.getUsed();
+  Memory.cpuIndex = Memory.cpuIndex + 1;
+  if (Memory.cpuIndex % 500 == 0) {
+    console.log("Used CPU: " + (Memory.cpuUsage / Memory.cpuIndex));
+  } else if (Memory.cpuIndex == 25000) {
+    Memory.cpuIndex = 0;
+    Memory.cpuUsage = 0;
+  }
 }

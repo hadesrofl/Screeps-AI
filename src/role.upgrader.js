@@ -1,8 +1,9 @@
 var managerHarvest = require('manager.harvest');
+var roleEnums = require('role.enums');
 
 var roleUpgrader = {
   parts: [WORK, CARRY, CARRY, MOVE, MOVE],
-  bigParts: [WORK, WORK, CARRY, MOVE, MOVE, MOVE],
+  bigParts: [WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
   canCreateCreep: function(spawn, big) {
@@ -19,13 +20,13 @@ var roleUpgrader = {
     if (this.canCreateCreep(spawn, big)) {
       if (big) {
         spawn.createCreep(this.bigParts, null, {
-          role: 'upgrader',
+          role: roleEnums.UPGRADER,
           upgrading: false,
           big: true
         });
       } else {
         spawn.createCreep(this.parts, null, {
-          role: 'upgrader',
+          role: roleEnums.UPGRADER,
           upgrading: false,
           big: false
         });
@@ -54,16 +55,18 @@ var roleUpgrader = {
         });
       }
     } else {
-      var sourceId = managerHarvest.getSource(creep);
-      if (sourceId < 0) {
-        sourceId = managerHarvest.getColdestSource();
+      if (creep.memory.sourceId == undefined) {
+        var sourceId = managerHarvest.getSource(creep);
         if (sourceId < 0) {
-          sourceId = creep.room.find(FIND_SOURCES)[0].id;
+          sourceId = managerHarvest.getColdestSource();
+          if (sourceId < 0) {
+            sourceId = creep.room.find(FIND_SOURCES)[0].id;
+          }
+          managerHarvest.addAllocation(creep, sourceId);
+          creep.memory.sourceId = sourceId;
         }
-        //console.log("Source id for " + creep.name + ": " + sourceId);
-        managerHarvest.addAllocation(creep, sourceId);
       }
-      var source = Game.getObjectById(sourceId);
+      var source = Game.getObjectById(creep.memory.sourceId);
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
         creep.moveTo(source, {
           visualizePathStyle: {
