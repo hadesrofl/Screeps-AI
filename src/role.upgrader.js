@@ -1,19 +1,37 @@
 var managerHarvest = require('manager.harvest');
+var roleEnums = require('role.enums');
 
 var roleUpgrader = {
   parts: [WORK, CARRY, CARRY, MOVE, MOVE],
+  bigParts: [WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
-  canCreateCreep: function(spawn) {
-    return spawn.canCreateCreep(
-      this.parts, null) == 0;
+  canCreateCreep: function(spawn, big) {
+    if (big) {
+      return spawn.canCreateCreep(
+        this.bigParts, null) == 0
+    } else {
+      return spawn.canCreateCreep(
+        this.parts, null) == 0;
+    }
   },
   /** @param {STRUCTURE_SPAWN} spawn **/
-  createCreep: function(spawn) {
-    spawn.createCreep(this.parts, null, {
-      role: 'upgrader',
-      upgrading: false
-    });
+  createCreep: function(spawn, big) {
+    if (this.canCreateCreep(spawn, big)) {
+      if (big) {
+        spawn.createCreep(this.bigParts, null, {
+          role: roleEnums.UPGRADER,
+          upgrading: false,
+          big: true
+        });
+      } else {
+        spawn.createCreep(this.parts, null, {
+          role: roleEnums.UPGRADER,
+          upgrading: false,
+          big: false
+        });
+      }
+    }
   },
   /** @param {Creep} creep **/
   run: function(creep) {
@@ -37,16 +55,14 @@ var roleUpgrader = {
         });
       }
     } else {
-      var sourceId = managerHarvest.getSource(creep);
-      if (sourceId < 0) {
-        sourceId = managerHarvest.getColdestSource();
+      if (creep.memory.sourceId == undefined) {
+        var sourceId = managerHarvest.getColdestSource(creep);
         if (sourceId < 0) {
           sourceId = creep.room.find(FIND_SOURCES)[0].id;
         }
-        //console.log("Source id for " + creep.name + ": " + sourceId);
-        managerHarvest.addAllocation(creep, sourceId);
+        creep.memory.sourceId = sourceId;
       }
-      var source = Game.getObjectById(sourceId);
+      var source = Game.getObjectById(creep.memory.sourceId);
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
         creep.moveTo(source, {
           visualizePathStyle: {
