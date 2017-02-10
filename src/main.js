@@ -3,6 +3,7 @@ var managerCreep = require('manager.creep');
 
 Memory.cpuIndex = 0;
 Memory.cpuUsage = 0.0;
+Memory.cpuAvg = 0.0;
 
 module.exports.loop = function() {
 
@@ -35,6 +36,7 @@ module.exports.loop = function() {
   }
   Memory.cpuUsage = Memory.cpuUsage + Game.cpu.getUsed();
   Memory.cpuIndex = Memory.cpuIndex + 1;
+  Memory.cpuAvg = Memory.cpuUsage / Memory.cpuIndex;
   if (Memory.cpuIndex % 500 == 0) {
     console.log("Used CPU: " + (Memory.cpuUsage / Memory.cpuIndex));
   } else if (Memory.cpuIndex == 25000) {

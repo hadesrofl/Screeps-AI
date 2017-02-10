@@ -2,8 +2,8 @@ var managerHarvest = require('manager.harvest');
 var roleEnums = require('role.enums');
 
 var roleGatherer = {
-  parts: [CARRY, CARRY, MOVE, MOVE, MOVE],
-  bigParts: [WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
+  parts: [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
+  bigParts: [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
   canCreateCreep: function(spawn, big) {
@@ -41,7 +41,7 @@ var roleGatherer = {
       creep.memory.gathering = true;
       creep.say('🔄 gather');
     }
-    if (creep.memory.gathering && creep.carry.energy >= (creep.carryCapacity * 0.7)) {
+    if (creep.memory.gathering && creep.carry.energy >= (creep.carryCapacity * 0.6)) {
       creep.memory.gathering = false;
       creep.say('🚧 deliver');
     }

@@ -8,12 +8,12 @@ var roleEnums = require('role.enums');
 var managerCreep = {
   MAX_BUILDER: 2,
   MAX_UPGRADER: 2,
-  MAX_HARVESTER: 3,
+  MAX_HARVESTER: 1,
   MAX_GATHERER: 1,
-  MAX_BIG_HARVESTER: 2,
-  MAX_BIG_BUILDER: 2,
-  MAX_BIG_UPGRADER: 2,
-  MAX_BIG_GATHERER: 1,
+  MAX_BIG_HARVESTER: 4,
+  MAX_BIG_BUILDER: 3,
+  MAX_BIG_UPGRADER: 1,
+  MAX_BIG_GATHERER: 3,
   roles: [roleEnums.HARVESTER, roleEnums.GATHERER, roleEnums.BUILDER,
     roleEnums.UPGRADER],
 
@@ -22,8 +22,10 @@ var managerCreep = {
     var creeps = spawn.room.find(FIND_MY_CREEPS);
     var resultMap = new Map();
     for (var i in this.roles) {
+      resultMap.set("big" + this.roles[i], 0);
       resultMap.set(this.roles[i], 0);
       delete Memory[spawn.room.name + ":" + this.roles[i]];
+      delete Memory[spawn.room.name + ":big" + this.roles[i]]
     }
     for (let i = 0; i < creeps.length; i++) {
       var role = creeps[i].memory.role;
@@ -88,7 +90,7 @@ var managerCreep = {
         }
       } else if (key == "big" + roleEnums.UPGRADER) {
         if (value < managerCreep.MAX_BIG_UPGRADER && roleUpgrader.createCreep(
-            spawn, false)) {
+            spawn, true)) {
           ret = "Not Enough Big Upgrader - creating!";
         }
       }
@@ -100,13 +102,6 @@ var managerCreep = {
   action: function() {
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      // Populate Map of Energy Sources
-      if (managerHarvest.getSources().size == 0) {
-        var sources = creep.room.find(FIND_SOURCES);
-        for (let i = 0; i < sources.length; i++) {
-          managerHarvest.addSource(sources[i]);
-        }
-      }
       if (creep.memory.role == roleEnums.HARVESTER) {
         roleHarvester.run(creep);
       }

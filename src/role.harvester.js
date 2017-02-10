@@ -3,7 +3,7 @@ var roleEnums = require('role.enums');
 
 var roleHarvester = {
   parts: [WORK, CARRY, CARRY, MOVE, MOVE],
-  bigParts: [WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE],
+  bigParts: [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
   canCreateCreep: function(spawn, big) {
@@ -36,15 +36,11 @@ var roleHarvester = {
   /** @param {Creep} creep **/
   run: function(creep) {
     if (creep.memory.sourceId == undefined) {
-      var sourceId = managerHarvest.getSource(creep);
+      var sourceId = managerHarvest.getColdestSource(creep);
       if (sourceId < 0) {
-        sourceId = managerHarvest.getColdestSource();
-        if (sourceId < 0) {
-          sourceId = creep.room.find(FIND_SOURCES)[0].id;
-        }
-        managerHarvest.addAllocation(creep, sourceId);
-        creep.memory.sourceId = sourceId;
+        sourceId = creep.room.find(FIND_SOURCES)[0].id;
       }
+      creep.memory.sourceId = sourceId;
     }
     if (creep.carry.energy < creep.carryCapacity) {
       var source = Game.getObjectById(creep.memory.sourceId);
@@ -55,8 +51,9 @@ var roleHarvester = {
           }
         });
       }
-    } else if (Memory[creep.room.name + ":" + roleEnums.GATHERER] < (Memory[
-        creep.room.name + ":" + roleEnums.HARVESTER] / 2)) {
+    } else if (Memory[creep.room.name + ":" + roleEnums.GATHERER] < Math.floor(
+        (Memory[
+          creep.room.name + ":" + roleEnums.HARVESTER] / 2))) {
       var targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (structure.structureType == STRUCTURE_EXTENSION ||

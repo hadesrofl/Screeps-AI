@@ -56,15 +56,11 @@ var roleUpgrader = {
       }
     } else {
       if (creep.memory.sourceId == undefined) {
-        var sourceId = managerHarvest.getSource(creep);
+        var sourceId = managerHarvest.getColdestSource(creep);
         if (sourceId < 0) {
-          sourceId = managerHarvest.getColdestSource();
-          if (sourceId < 0) {
-            sourceId = creep.room.find(FIND_SOURCES)[0].id;
-          }
-          managerHarvest.addAllocation(creep, sourceId);
-          creep.memory.sourceId = sourceId;
+          sourceId = creep.room.find(FIND_SOURCES)[0].id;
         }
+        creep.memory.sourceId = sourceId;
       }
       var source = Game.getObjectById(creep.memory.sourceId);
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
