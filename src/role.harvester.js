@@ -34,7 +34,31 @@ var roleHarvester = {
     return false;
   },
   /** @param {Creep} creep **/
+  suicide: function(creep) {
+    var workCounter = 0;
+    var carryCounter = 0;
+    var moveCounter = 0;
+    for (let i = 0; i < creep.body.length; i++) {
+      var bodyPart = creep.body[i];
+      if (bodyPart.hits > 0) {
+        if (bodyPart.type == WORK) {
+          workCounter++;
+        } else if (bodyPart.type == MOVE) {
+          moveCounter++;
+        } else if (bodyPart.type == CARRY) {
+          carryCounter++;
+        }
+      }
+    }
+    if (workCounter == 0 || moveCounter == 0 || carryCounter == 0) {
+      console.log("Harvester: Move: " + moveCounter + "; Work: " +
+        workCounter + "; Carry: " + carryCounter + " => Killing myself");
+      creep.suicide();
+    }
+  },
+  /** @param {Creep} creep **/
   run: function(creep) {
+    this.suicide(creep);
     if (creep.memory.sourceId == undefined) {
       var sourceId = managerHarvest.getColdestSource(creep);
       if (sourceId < 0) {
@@ -42,6 +66,9 @@ var roleHarvester = {
       }
       creep.memory.sourceId = sourceId;
     }
+    var gathererCounter = Memory[creep.room.name + ":" + roleEnums.GATHERER];
+    var harvesterCounter = Memory[
+      creep.room.name + ":" + roleEnums.HARVESTER];
     if (creep.carry.energy < creep.carryCapacity) {
       var source = Game.getObjectById(creep.memory.sourceId);
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
@@ -51,9 +78,9 @@ var roleHarvester = {
           }
         });
       }
-    } else if (Memory[creep.room.name + ":" + roleEnums.GATHERER] < Math.floor(
-        (Memory[
-          creep.room.name + ":" + roleEnums.HARVESTER] / 2))) {
+    } else if (gathererCounter == undefined || gathererCounter == 0 ||
+      gathererCounter < Math.floor(
+        (harvesterCounter / 2))) {
       var targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (structure.structureType == STRUCTURE_EXTENSION ||

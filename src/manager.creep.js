@@ -4,18 +4,23 @@ var roleBuilder = require('role.builder');
 var roleGatherer = require('role.gatherer');
 var managerHarvest = require('manager.harvest');
 var roleEnums = require('role.enums');
+var roleDefender = require('role.defender');
 
 var managerCreep = {
-  MAX_BUILDER: 2,
-  MAX_UPGRADER: 2,
+  MAX_BUILDER: 1,
+  MAX_UPGRADER: 1,
   MAX_HARVESTER: 1,
   MAX_GATHERER: 1,
-  MAX_BIG_HARVESTER: 4,
-  MAX_BIG_BUILDER: 3,
+  MAX_DEFENDER: 2,
+  MAX_BIG_HARVESTER: 1,
+  MAX_BIG_BUILDER: 1,
   MAX_BIG_UPGRADER: 1,
-  MAX_BIG_GATHERER: 3,
+  MAX_BIG_GATHERER: 1,
+  MAX_BIG_DEFENDER: 2,
+  SMALL_RATIO: 2.0,
+  BIG_RATIO: 2.0,
   roles: [roleEnums.HARVESTER, roleEnums.GATHERER, roleEnums.BUILDER,
-    roleEnums.UPGRADER],
+    roleEnums.UPGRADER, roleEnums.DEFENDER],
 
   /** @param {STRUCTURE_SPAWN} spawn **/
   countCreeps: function(spawn) {
@@ -43,59 +48,101 @@ var managerCreep = {
     return resultMap;
   },
   /**  @param {STRUCTURE_SPAWN} spawn **/
-  createCreep: function(spawn) {
+  createCreeps: function(spawn) {
     var creeps = this.countCreeps(spawn);
+    var smallRatio = 1;
+    var bigRatio = 1;
     if (creeps.size == 0 || creeps.get(roleEnums.HARVESTER) < 1) {
-      roleHarvester.createCreep(spawn, false);
+      if (roleHarvester.createCreep(spawn, false)) {
+        console.log("No Harvester - creating!");
+      }
+      return;
     } else if (creeps.get(roleEnums.GATHERER) < 1) {
-      roleGatherer.createCreep(spawn, false);
+      if (roleGatherer.createCreep(spawn, false)) {
+        console.log("No Gatherer - creating!");
+      }
+      return;
+    }
+    if (spawn.room.energyCapacityAvailable < 500) {
+      smallRatio = managerCreep.SMALL_RATIO;
+    } else if (spawn.room.energyCapacityAvailable >= 500) {
+      bigRatio = managerCreep.BIG_RATIO;
+      smallRatio = 0.5;
     }
     creeps.forEach(function(value, key) {
       var ret = null;
-      if (key == roleEnums.HARVESTER) {
-        if (value < managerCreep.MAX_HARVESTER && roleHarvester.createCreep(
-            spawn, false)) {
-          ret = "Not Enough Harvester - creating!";
+      // war
+      if (Memory[spawn.room + ":defend"]) {
+        if (key == roleEnums.DEFENDER) {
+          if (value < managerCreep.MAX_DEFENDER * smallRatio &&
+            roleDefender.createCreep(
+              spawn, false)) {
+            ret = "Not Enough Defender - creating!";
+          }
+        } else if (key == "big" + roleEnums.DEFENDER) {
+          if (value < managerCreep.MAX_BIG_DEFENDER * bigRatio &&
+            roleDefender.createCreep(
+              spawn, true)) {
+            ret = "Not Enough Big Defender - creating!";
+          }
         }
-      } else if (key == "big" + roleEnums.HARVESTER) {
-        if (value < managerCreep.MAX_BIG_HARVESTER && roleHarvester.createCreep(
-            spawn, true)) {
-          ret = "Not Enough Big Harvester - creating!";
-        }
-      } else if (key == roleEnums.GATHERER) {
-        if (value < managerCreep.MAX_GATHERER && roleGatherer.createCreep(
-            spawn, false)) {
-          ret = "Not Enough Gatherer - creating!";
-        }
-      } else if (key == "big" + roleEnums.GATHERER) {
-        if (value < managerCreep.MAX_BIG_GATHERER && roleGatherer.createCreep(
-            spawn, true)) {
-          ret = "Not Enough Gatherer - creating!";
-        }
-      } else if (key ==
-        roleEnums.BUILDER) {
-        if (value < managerCreep.MAX_BUILDER && roleBuilder.createCreep(
-            spawn, false)) {
-          ret = "Not Enough Builder - creating!";
-        }
-      } else if (key == "big" + roleEnums.BUILDER) {
-        if (value < managerCreep.MAX_BIG_BUILDER && roleBuilder.createCreep(
-            spawn, true)) {
-          ret = "Not Enough Big Builder - creating!";
-        }
-      } else if (key == roleEnums.UPGRADER) {
-        if (value < managerCreep.MAX_UPGRADER && roleUpgrader.createCreep(
-            spawn, false)) {
-          ret = "Not Enough Upgrader - creating!";
-        }
-      } else if (key == "big" + roleEnums.UPGRADER) {
-        if (value < managerCreep.MAX_BIG_UPGRADER && roleUpgrader.createCreep(
-            spawn, true)) {
-          ret = "Not Enough Big Upgrader - creating!";
+      }
+      // peace
+      else {
+        if (key == roleEnums.HARVESTER) {
+          if (value < managerCreep.MAX_HARVESTER * smallRatio &&
+            roleHarvester.createCreep(
+              spawn, false)) {
+            ret = "Not Enough Harvester - creating!";
+          }
+        } else if (key == "big" + roleEnums.HARVESTER) {
+          if (value < managerCreep.MAX_BIG_HARVESTER * bigRatio &&
+            roleHarvester.createCreep(
+              spawn, true)) {
+            ret = "Not Enough Big Harvester - creating!";
+          }
+        } else if (key == roleEnums.GATHERER) {
+          if (value < managerCreep.MAX_GATHERER * smallRatio &&
+            roleGatherer.createCreep(
+              spawn, false)) {
+            ret = "Not Enough Gatherer - creating!";
+          }
+        } else if (key == "big" + roleEnums.GATHERER) {
+          if (value < managerCreep.MAX_BIG_GATHERER * bigRatio &&
+            roleGatherer.createCreep(
+              spawn, true)) {
+            ret = "Not Enough Gatherer - creating!";
+          }
+        } else if (key ==
+          roleEnums.BUILDER) {
+          if (value < managerCreep.MAX_BUILDER * smallRatio &&
+            roleBuilder.createCreep(
+              spawn, false)) {
+            ret = "Not Enough Builder - creating!";
+          }
+        } else if (key == "big" + roleEnums.BUILDER) {
+          if (value < managerCreep.MAX_BIG_BUILDER * bigRatio &&
+            roleBuilder.createCreep(
+              spawn, true)) {
+            ret = "Not Enough Big Builder - creating!";
+          }
+        } else if (key == roleEnums.UPGRADER) {
+          if (value < managerCreep.MAX_UPGRADER * smallRatio &&
+            roleUpgrader.createCreep(
+              spawn, false)) {
+            ret = "Not Enough Upgrader - creating!";
+          }
+        } else if (key == "big" + roleEnums.UPGRADER) {
+          if (value < managerCreep.MAX_BIG_UPGRADER * bigRatio &&
+            roleUpgrader.createCreep(
+              spawn, true)) {
+            ret = "Not Enough Big Upgrader - creating!";
+          }
         }
       }
       if (ret != null) {
         console.log(ret);
+        return;
       }
     });
   },
@@ -113,6 +160,9 @@ var managerCreep = {
       }
       if (creep.memory.role == roleEnums.GATHERER) {
         roleGatherer.run(creep);
+      }
+      if (creep.memory.role == roleEnums.DEFENDER) {
+        roleDefender.run(creep);
       }
     }
   },

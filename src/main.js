@@ -10,7 +10,36 @@ module.exports.loop = function() {
   managerCreep.deleteMemory();
   for (var name in Game.spawns) {
     var spawn = Game.spawns[name];
-    managerCreep.createCreep(spawn);
+    var enemies = spawn.room.find(FIND_HOSTILE_CREEPS);
+    if (enemies.length) {
+      Memory[spawn.room + ":defend"] = true;
+      var attackedStructures = spawn.room.find(FIND_STRUCTURES, {
+        filter: (structure) => {
+          return ((structure.structureType ==
+                STRUCTURE_WALL || structure.structureType ==
+                STRUCTURE_RAMPART) && structure.hits < 5000 &&
+              structure.hits >
+              1) || structure
+            .structureType !=
+            STRUCTURE_WALL &&
+            structure.structureType != STRUCTURE_ROAD && structure.hits <
+            structure.hitsMax;
+        }
+      });
+      if (attackedStructures.length) {
+        var controller = spawn.room.controller;
+        var safeModeTicks = controller.safeMode;
+        var safeModeCD = controller.safeModeCooldown;
+        var safeModeAvailable = controller.safeModeAvailable;
+        if (safeModeTicks == undefined && safeModeCD == undefined &&
+          safeModeAvailable) {
+          spawn.room.controller.activateSafeMode();
+        }
+      }
+    } else {
+      Memory[spawn.room + ":defend"] = false;
+    }
+    managerCreep.createCreeps(spawn);
   }
 
   var tower = Game.getObjectById('TOWER_ID');

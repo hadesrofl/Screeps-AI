@@ -9,6 +9,9 @@ var managerHarvest = {
     var source = "";
     var sources = creep.room.find(FIND_SOURCES);
     var creeps = creep.room.find(FIND_MY_CREEPS);
+    for (let i = 0; i < sources.length; i++) {
+      sourceMap.set(sources[i].id, 0);
+    }
 
     for (let i = 0; i < creeps.length; i++) {
       var creep = creeps[i];
@@ -18,8 +21,6 @@ var managerHarvest = {
             if (sourceMap.has(sources[j].id)) {
               sourceMap.set(sources[j].id, sourceMap.get(sources[j].id) +
                 1);
-            } else {
-              sourceMap.set(sources[j].id, 1);
             }
           }
         }
