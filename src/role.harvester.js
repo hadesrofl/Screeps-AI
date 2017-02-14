@@ -1,4 +1,5 @@
 var managerHarvest = require('manager.harvest');
+var creepUtils = require('utils.creep');
 var roleEnums = require('role.enums');
 
 var roleHarvester = {
@@ -21,17 +22,24 @@ var roleHarvester = {
       if (big) {
         spawn.createCreep(this.bigParts, null, {
           role: roleEnums.HARVESTER,
+          sourceId: 0,
           big: true
         });
       } else {
         spawn.createCreep(this.parts, null, {
           role: roleEnums.HARVESTER,
+          sourceId: 0,
           big: false
         });
       }
       return true;
     }
     return false;
+  },
+  /** @param {Creep} creep **/
+  dropResources: function(creep, resource) {
+    creep.say("Dropping");
+    creep.drop(resource);
   },
   /** @param {Creep} creep **/
   suicide: function(creep) {
@@ -59,24 +67,21 @@ var roleHarvester = {
   /** @param {Creep} creep **/
   run: function(creep) {
     this.suicide(creep);
-    if (creep.memory.sourceId == undefined) {
+    if (creep.memory.sourceId == 0) {
       var sourceId = managerHarvest.getColdestSource(creep);
       if (sourceId < 0) {
         sourceId = creep.room.find(FIND_SOURCES)[0].id;
       }
       creep.memory.sourceId = sourceId;
     }
-    var gathererCounter = Memory[creep.room.name + ":" + roleEnums.GATHERER];
+    var gathererCounter = Memory[creep.room.name + ":" + roleEnums.GATHERER] +
+      Memory[creep.room.name + ":big" + roleEnums.GATHERER];
     var harvesterCounter = Memory[
       creep.room.name + ":" + roleEnums.HARVESTER];
     if (creep.carry.energy < creep.carryCapacity) {
       var source = Game.getObjectById(creep.memory.sourceId);
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(source, {
-          visualizePathStyle: {
-            stroke: '#ffaa00'
-          }
-        });
+        creepUtils.moveTo(creep, source, false);
       }
     } else if (gathererCounter == undefined || gathererCounter == 0 ||
       gathererCounter < Math.floor(
@@ -91,19 +96,13 @@ var roleHarvester = {
       });
       if (targets.length > 0) {
         if (creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0], {
-            visualizePathStyle: {
-              stroke: '#ffffff'
-            }
-          });
+          creepUtils.moveTo(creep, targets[0], false);
         }
       } else {
-        creep.say("Dropping");
-        creep.drop(RESOURCE_ENERGY);
+        this.dropResources(creep, RESOURCE_ENERGY);
       }
     } else {
-      creep.say("Dropping");
-      creep.drop(RESOURCE_ENERGY);
+      this.dropResources(creep, RESOURCE_ENERGY);
     }
   }
 };
